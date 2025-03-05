@@ -20,17 +20,18 @@ def get_order_by(orders):
     return ""
 
 
-def get_wp_posts(post_date='2025-01-01 00:00:00', status='publish', post_type='post'):
+def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post'):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
     select_query = f"""
         SELECT id, post_content from wp_posts 
         WHERE post_type = '{post_type}' AND post_status = '{status}'
-        AND post_date > %s
+        AND post_date BETWEEN %s AND %s
+        ORDER BY id
     """
 
     try:
-        db_cursor.execute(select_query, (post_date,))
+        db_cursor.execute(select_query, (from_post_date, to_post_date))
         return db_cursor.fetchall()
     finally:
         db_cursor.close()

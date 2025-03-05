@@ -2,6 +2,8 @@ import re
 import wp
 import requests
 
+from settings import WP_SETTINGS, WP_QUERY
+
 # Regular expression to extract image URLs
 IMAGE_REGEX = r'<img\s+[^>]*src=["\'](https?://[^"\']+)["\']'
 
@@ -28,7 +30,8 @@ def check_url_status(url):
 
 def main():
     print("Fetching WordPress post content...")
-    posts = wp.get_wp_posts()
+    posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
+                            to_post_date=WP_QUERY['select_posts_to_date'])
 
     if not posts:
         print("No posts found.")
