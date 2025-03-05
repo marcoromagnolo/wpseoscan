@@ -25,7 +25,7 @@ OPENAI_SECRET = ''
 
 WP_SETTINGS = {
     'host': 'localhost',
-    'user': 'scienzenotizie',
+    'user': 'user',
     'password': 'password',
-    'database': 'scienzenotizie'
+    'database': 'db'
 }
