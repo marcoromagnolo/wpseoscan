@@ -1,0 +1,9 @@
+mysql-connector-python==8.1.0
+Flask
+requests
+beautifulsoup4
+scikit-learn
+networkx
+spacy
+ntlk
+sentence_transformers
