@@ -49,6 +49,8 @@ def is_duplicate_image(featured_image, img_url):
     return False
 
 def remove_caption_if_valid(post_id, post_content):
+    print(f"Checking post {post_id} for invalid image URLs...")
+
     # Regular expression pattern to find all caption shortcodes
     caption_pattern = r'<figure.*?>(.*?)</figure>'
 
