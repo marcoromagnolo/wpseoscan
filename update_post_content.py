@@ -49,8 +49,6 @@ def is_duplicate_image(featured_image, img_url):
     return False
 
 def remove_caption_if_valid(post_id, post_content):
-    print(f"Checking post {post_id} for invalid image URLs...")
-
     # Regular expression pattern to find all caption shortcodes
     caption_pattern = r'<figure.*?>(.*?)</figure>'
 
@@ -66,12 +64,13 @@ def remove_caption_if_valid(post_id, post_content):
 
             if img_url_match:
                 img_url = img_url_match.group(1)
-                featured_image = wp.get_wp_post_featured_image(post_id)
-                if is_duplicate_image(featured_image, img_url) or invalid_image_url(img_url):
-                    print(f"Post ID: {post_id} Removing <figcaption> with image: {img_url}")
-                    # If the image URL is valid, remove the entire caption block from post_content
-                    update = True
-                    post_content = re.sub(r'<figure.*?>' + re.escape(caption) + r'</figure>', '', post_content, flags=re.DOTALL)
+                featured_images = wp.get_wp_post_featured_image(post_id)
+                for featured_image in featured_images:
+                    if is_duplicate_image(featured_image[0], img_url) or invalid_image_url(img_url):
+                        print(f"Post ID: {post_id} Removing <figcaption> with image: {img_url}")
+                        # If the image URL is valid, remove the entire caption block from post_content
+                        update = True
+                        post_content = re.sub(r'<figure.*?>' + re.escape(caption) + r'</figure>', '', post_content, flags=re.DOTALL)
 
 
     return update, post_content
