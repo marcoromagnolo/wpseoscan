@@ -20,13 +20,16 @@ def get_order_by(orders):
     return ""
 
 
-def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post'):
+def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post', where=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
+    if where:
+        where = f"AND {where}"
     select_query = f"""
         SELECT id, post_content from wp_posts 
         WHERE post_type = '{post_type}' AND post_status = '{status}'
         AND post_date BETWEEN %s AND %s
+        {where}
         ORDER BY id
     """
 
@@ -54,3 +57,41 @@ def get_wp_id_posts(post_date='2025-01-01 00:00:00'):
         db_cursor.close()
         db_connection.close()
 
+
+def get_wp_post_featured_image(post_id):
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    select_query = f"""
+                    SELECT p.guid 
+                    FROM wp_postmeta pm
+                    LEFT JOIN wp_posts p ON p.ID = pm.meta_value
+                    WHERE post_id = %s
+                      AND meta_key = '_thumbnail_id'
+                    GROUP BY p.guid
+                """
+
+    try:
+        db_cursor.execute(select_query, (post_id,))
+        row = db_cursor.fetchone()
+        if row is not None:
+            return row[0]
+    finally:
+        db_cursor.close()
+        db_connection.close()
+
+
+def get_wp_update_post_content(post_id, cleaned_content):
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    update_query = f"""
+        UPDATE wp_posts
+        SET post_content = %s
+        WHERE id = %s
+    """
+
+    try:
+        db_cursor.execute(update_query, (cleaned_content, post_id))
+        db_connection.commit()
+    finally:
+        db_cursor.close()
+        db_connection.close()
