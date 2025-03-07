@@ -74,9 +74,7 @@ def get_wp_post_featured_image(post_id):
 
     try:
         db_cursor.execute(select_query, (post_id,))
-        row = db_cursor.fetchone()
-        if row is not None:
-            return row[0]
+        return db_cursor.fetchall()
     finally:
         db_cursor.close()
         db_connection.close()
