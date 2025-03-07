@@ -19,10 +19,10 @@ def extract_link_urls(post_content):
     return re.findall(LINK_REGEX, post_content)
 
 
-def check_url_status(url):
+def check_url_status(url, allow_redirects):
     """Checks the HTTP status of a URL."""
     try:
-        response = requests.head(url, allow_redirects=True, timeout=5)
+        response = requests.head(url, allow_redirects=allow_redirects, timeout=5)
         return response.status_code
     except requests.RequestException:
         return "ERROR"
@@ -48,14 +48,16 @@ def main():
     print(f"Checking {len(image_urls)} image URLs...")
 
     for post_id, url in image_urls:
-        status = check_url_status(url)
-        print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
+        status = check_url_status(url, False)
+        if status != 200:
+            print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
 
     print(f"Checking {len(link_urls)} link URLs...")
 
     for post_id, url in link_urls:
-        status = check_url_status(url)
-        print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
+        status = check_url_status(url, True)
+        if status != 200:
+            print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
 
 
 if __name__ == "__main__":

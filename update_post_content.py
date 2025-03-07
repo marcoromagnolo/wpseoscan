@@ -22,6 +22,10 @@ def update_urls(content):
 
 # Function to check if the image URL is valid (not 404)
 def invalid_image_url(url):
+    if not url.startswith("https://www.scienzenotizie.it"):
+        print(f"Image is not local: {url}")
+        return True
+
     try:
         response = requests.head(url, allow_redirects=True)
         # If the URL responds with status code 200, it's valid
@@ -39,17 +43,18 @@ def invalid_image_url(url):
 def is_duplicate_image(featured_image, img_url):
     featured_image_name, _ = os.path.splitext(featured_image)
 
-    if featured_image == img_url or img_url.startswith(featured_image_name) or img_url.startswith(featured_image_name[:-1]):
+    if featured_image == img_url or img_url.startswith(featured_image_name) or img_url.startswith(featured_image_name):
         print(f"Image are duplicated: {featured_image} {img_url}")
         return True
     return False
 
 def remove_caption_if_valid(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
-    caption_pattern = r'\[caption[^\]]*?\](.*?)\[/caption\]'
+    caption_pattern = r'<figure.*?>(.*?)</figure>'
 
     # Find all the caption blocks
     captions = re.findall(caption_pattern, post_content, re.DOTALL)
+    update = False
     if captions:
         # Loop through each caption block to check if the image URL is valid
         for caption in captions:
@@ -61,22 +66,20 @@ def remove_caption_if_valid(post_id, post_content):
                 img_url = img_url_match.group(1)
                 featured_image = wp.get_wp_post_featured_image(post_id)
                 if is_duplicate_image(featured_image, img_url) or invalid_image_url(img_url):
-                    print(f"Post ID: {post_id} Removing [caption] with image: {img_url}")
+                    print(f"Post ID: {post_id} Removing <figcaption> with image: {img_url}")
                     # If the image URL is valid, remove the entire caption block from post_content
-                    cleaned = True
-                    post_content = re.sub(r'\[caption[^\]]*?\]' + re.escape(caption) + r'\[/caption\]', '', post_content, flags=re.DOTALL)
-    else:
-        post_content = re.sub(r'\[caption[^\]]*?\].*\[/caption\]', '', post_content, flags=re.DOTALL)
+                    update = True
+                    post_content = re.sub(r'<figure.*?>' + re.escape(caption) + r'</figure>', '', post_content, flags=re.DOTALL)
 
 
-    return post_content
+    return update, post_content
 
 
 def remove_captions():
     print("Fetching WordPress post content...")
     posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
                             to_post_date=WP_QUERY['select_posts_to_date'],
-                            where="post_content LIKE '%[caption%'")
+                            where="post_content LIKE '%<figure%'")
 
     if not posts:
         print("No posts found.")
@@ -85,10 +88,10 @@ def remove_captions():
     print(f"Checking {len(posts)} image URLs...")
     for post_id, post_content in posts:
         # Remove captions if image URL is valid
-        post_content = update_urls(post_content)
-        cleaned_content = remove_caption_if_valid(post_id, post_content)
-        print(f"Updating post {post_id} with cleaned content")
-        wp.get_wp_update_post_content(post_id, cleaned_content)
+        update, cleaned_content = remove_caption_if_valid(post_id, post_content)
+        if update:
+            print(f"Updating post {post_id} with cleaned content")
+            wp.get_wp_update_post_content(post_id, cleaned_content)
 
 
 
