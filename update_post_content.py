@@ -31,7 +31,7 @@ def invalid_image_url(url):
         # If the URL responds with status code 200, it's valid
         if response.status_code == 200:
             return False
-        else:
+        elif response.status_code == 404:
             print(f"Error image not found at URL: {url}")
             return True
     except requests.exceptions.RequestException as e:
