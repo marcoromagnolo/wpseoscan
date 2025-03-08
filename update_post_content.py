@@ -89,6 +89,7 @@ def update_img_src(post_id, post_content):
                         print(f"Post ID: {post_id} update <img> src with URL: {new_url}")
                         new_img = img.replace(url, new_url)
                         post_content = post_content.replace(img, new_img)
+                    update = True
 
     return update, post_content
 
