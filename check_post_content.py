@@ -9,6 +9,8 @@ IMAGE_REGEX = r'<img\s+[^>]*src=["\'](https?://[^"\']+)["\']'
 
 LINK_REGEX = r'<a\s+[^>]*href=["\'](https?://[^"\']+)["\']'
 
+IFRAME_REGEX = r'<iframe\s+[^>]*src=["\'](https?://[^"\']+)["\']'
+
 def extract_image_urls(post_content):
     """Extracts image URLs from post_content using regex."""
     return re.findall(IMAGE_REGEX, post_content)
@@ -17,6 +19,11 @@ def extract_image_urls(post_content):
 def extract_link_urls(post_content):
     """Extracts image URLs from post_content using regex."""
     return re.findall(LINK_REGEX, post_content)
+
+
+def extract_iframe_urls(post_content):
+    """Extracts image URLs from post_content using regex."""
+    return re.findall(IFRAME_REGEX, post_content)
 
 
 def check_url_status(url, allow_redirects):
@@ -39,6 +46,7 @@ def main():
 
     image_urls = set()  # To avoid duplicate URLs
     link_urls = set()
+    iframe_urls = set()
     for post_id, content in posts:
         for url in extract_image_urls(content):
             image_urls.add((post_id, url))
@@ -50,14 +58,21 @@ def main():
     for post_id, url in image_urls:
         status = check_url_status(url, False)
         if status != 200:
-            print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
+            print(f"Post ID: {post_id} | img src: {url} | Status: {status}")
 
     print(f"Checking {len(link_urls)} link URLs...")
 
     for post_id, url in link_urls:
         status = check_url_status(url, True)
         if status != 200:
-            print(f"Post ID: {post_id} | URL: {url} | Status: {status}")
+            print(f"Post ID: {post_id} | link href: {url} | Status: {status}")
+
+    print(f"Checking {len(iframe_urls)} iframe URLs...")
+
+    for post_id, url in iframe_urls:
+        status = check_url_status(url, True)
+        if status != 200:
+            print(f"Post ID: {post_id} | iframe src: {url} | Status: {status}")
 
 
 if __name__ == "__main__":
