@@ -48,6 +48,51 @@ def is_duplicate_image(featured_image, img_url):
         return True
     return False
 
+
+def update_img_src(post_id, post_content):
+    # Regular expression pattern to find all caption shortcodes
+    img_pattern = r'(<img[^>]+>)'
+
+    # Find all the caption blocks
+    imgs = re.findall(img_pattern, post_content, re.DOTALL)
+    update = False
+    if imgs:
+        # Loop through each caption block to check if the image URL is valid
+        for img in imgs:
+            # Extract the image URL (src) from the caption block using regex
+            img_url_pattern = r'<img[^>]+src="([^"]+)"'
+            img_url_match = re.search(img_url_pattern, img)
+
+            if img_url_match:
+                url = img_url_match.group(1)
+
+                if invalid_image_url(url):
+
+                    url_no_ext, ext = os.path.splitext(url)
+                    new_url = url_no_ext[:-2] + ext
+
+                    featured_images = wp.get_wp_post_featured_image(post_id)
+                    for featured_image in featured_images:
+                        if featured_image[0] == new_url:
+                            print(f"Post ID: {post_id} duplicated <img> with URL: {url}")
+                            post_content = post_content.replace(img, '')
+                            update = True
+
+                    if update:
+                        continue
+
+                    print(f"Invalid image URL try with: {new_url}")
+                    if invalid_image_url(new_url):
+                        print(f"Post ID: {post_id} remove <img> with URL: {url}")
+                        post_content = post_content.replace(img, '')
+                    else:
+                        print(f"Post ID: {post_id} update <img> src with URL: {new_url}")
+                        new_img = img.replace(url, new_url)
+                        post_content = post_content.replace(img, new_img)
+
+    return update, post_content
+
+
 def remove_caption_if_valid(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     caption_pattern = r'<figure.*?>(.*?)</figure>'
@@ -80,7 +125,7 @@ def remove_captions():
     print("Fetching WordPress post content...")
     posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
                             to_post_date=WP_QUERY['select_posts_to_date'],
-                            where="post_content LIKE '%<figure%'")
+                            where="post_content LIKE '%<img %'")
 
     if not posts:
         print("No posts found.")
@@ -89,7 +134,7 @@ def remove_captions():
     print(f"Checking {len(posts)} image URLs...")
     for post_id, post_content in posts:
         # Remove captions if image URL is valid
-        update, cleaned_content = remove_caption_if_valid(post_id, post_content)
+        update, cleaned_content = update_img_src(post_id, post_content)
         if update:
             print(f"Updating post {post_id} with cleaned content")
             wp.get_wp_update_post_content(post_id, cleaned_content)
