@@ -1,5 +1,7 @@
 import os
 import re
+from asyncio import timeout
+
 import wp
 import requests
 
@@ -28,7 +30,7 @@ def invalid_url(url, check_local=False):
         return True
 
     try:
-        response = requests.head(url, allow_redirects=True)
+        response = requests.head(url, allow_redirects=True, timeout=10)
         # If the URL responds with status code 200, it's valid
         if response.status_code == 200:
             return False
