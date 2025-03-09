@@ -1,4 +1,5 @@
 import spacy
+import re
 from sentence_transformers import SentenceTransformer, util
 
 # Load spaCy model for entity recognition
@@ -7,10 +8,17 @@ nlp = spacy.load("it_core_news_sm")
 # Initialize the SentenceTransformer for semantic similarity
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
+def contain_url(text):
+    return re.search(r'https?://\S+', text)
+
 # Function to extract entities from an article using spaCy
 def extract_entities(posts):
     doc = nlp(posts)
-    entities = [ent.text for ent in doc.ents]
+    entities = set()
+    for ent in doc.ents:
+        text = ent.text.lower()
+        if text and re.search(r'[a-zA-Z]', text) and not contain_url(text):
+            entities.add(text)
     return entities
 
 

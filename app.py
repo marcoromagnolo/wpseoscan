@@ -65,21 +65,22 @@ def init_entities():
 
     # Load Wordpress Posts (post_id, post_content)]
     posts = {}
-    for row in wp.get_wp_posts():
-        posts[row[0]] = util.clean_html(row[1])
+    for row in wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
+                               to_post_date=settings.WP_QUERY['select_posts_to_date']):
+        post_id = row[0]
+        post_text = util.clean_html(row[1]).replace('\n', '')
 
-    # Step 1: Extract entities from the first article
-    _, search_post = posts.popitem()
-    entities = extract_entities(search_post)
-    print("Entities extracted from Article 1:", entities)
+        entities = extract_entities(post_text)
+        # print(f"Text: {post_text}")
+        print(f"Entities extracted from Post ID {post_id}:", entities)
 
-    # Step 2: For each entity, perform semantic search in the other articles
-    for entity in entities:
-        print(f"\nSemantic search for entity: {entity}")
-        best_article, score = semantic_search(entity, posts)
-        print(f"\n🔹 Best match for entity '{entity}':")
-        print(f"   - Article: {best_article}")
-        print(f"   - Similarity Score: {score:.4f}")
+        # Step 2: For each entity, perform semantic search in the other articles
+        # for entity in entities:
+        #     print(f"\nSemantic search for entity: {entity}")
+        #     best_article, score = semantic_search(entity, posts)
+        #     print(f"\n🔹 Best match for entity '{entity}':")
+        #     print(f"   - Article: {best_article}")
+        #     print(f"   - Similarity Score: {score:.4f}")
 
 
 def init_tfidf():

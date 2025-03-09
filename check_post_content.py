@@ -28,11 +28,9 @@ def extract_iframe_urls(post_content):
 
 def check_url_status(url, allow_redirects):
     """Checks the HTTP status of a URL."""
-    try:
-        response = requests.head(url, allow_redirects=allow_redirects, timeout=5)
-        return response.status_code
-    except requests.RequestException:
-        return "ERROR"
+    response = requests.head(url, allow_redirects=allow_redirects, timeout=5)
+    response.raise_for_status()
+
 
 
 def main():
@@ -52,27 +50,32 @@ def main():
             image_urls.add((post_id, url))
         for url in extract_link_urls(content):
             link_urls.add((post_id, url))
+        for url in extract_iframe_urls(content):
+            iframe_urls.add((post_id, url))
 
     print(f"Checking {len(image_urls)} image URLs...")
 
     for post_id, url in image_urls:
-        status = check_url_status(url, False)
-        if status != 200:
-            print(f"Post ID: {post_id} | img src: {url} | Status: {status}")
+        try:
+            check_url_status(url, False)
+        except Exception as e:
+            print(f"Post ID: {post_id} | img src: {url} | Error: {e}")
 
     print(f"Checking {len(link_urls)} link URLs...")
 
     for post_id, url in link_urls:
-        status = check_url_status(url, True)
-        if status != 200:
-            print(f"Post ID: {post_id} | link href: {url} | Status: {status}")
+        try:
+            check_url_status(url, True)
+        except Exception as e:
+            print(f"Post ID: {post_id} | link href: {url} | Error: {e}")
 
     print(f"Checking {len(iframe_urls)} iframe URLs...")
 
     for post_id, url in iframe_urls:
-        status = check_url_status(url, True)
-        if status != 200:
-            print(f"Post ID: {post_id} | iframe src: {url} | Status: {status}")
+        try:
+            check_url_status(url, True)
+        except Exception as e:
+            print(f"Post ID: {post_id} | iframe src: {url} | Error: {e}")
 
 
 if __name__ == "__main__":
