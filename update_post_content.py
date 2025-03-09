@@ -1,6 +1,7 @@
 import os
 import re
 from asyncio import timeout
+from inspect import isframe
 
 import wp
 import requests
@@ -30,7 +31,7 @@ def invalid_url(url, check_local=False):
         return True
 
     try:
-        response = requests.head(url, allow_redirects=True, timeout=10)
+        response = requests.head(url, allow_redirects=True, timeout=5)
         # If the URL responds with status code 200, it's valid
         if response.status_code == 200:
             return False
@@ -52,6 +53,30 @@ def is_duplicate_image(featured_image, img_url):
     return False
 
 
+def update_iframe_src(post_id, post_content):
+    # Regular expression pattern to find all caption shortcodes
+    iframe_pattern = r'<iframe[^>]*[/]?>.*?</iframe>|<iframe[^>]*/?>'
+
+    # Find all the caption blocks
+    iframes = re.findall(iframe_pattern, post_content, re.DOTALL | re.IGNORECASE)
+    update = False
+    if iframes:
+        # Loop through each caption block to check if the image URL is valid
+        for iframe in iframes:
+            # Extract the image URL (src) from the caption block using regex
+            iframe_src_pattern = r'<iframe[^>]+src=["\']?([^"\'> ]+)[^>]*[/]?>'
+            isframe_url_match = re.search(iframe_src_pattern, iframe)
+
+            if isframe_url_match:
+                url = isframe_url_match.group(1)
+                if invalid_url(url):
+                    print(f"Post ID: {post_id} remove <iframe> with URL: {url}")
+                    post_content = post_content.replace(iframe, '')
+                    update = True
+
+    return update, post_content
+
+
 def update_a_href(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     a_pattern = r'<a[^>]*>.*?</a>'
@@ -69,7 +94,7 @@ def update_a_href(post_id, post_content):
             if link_url_match:
                 url = link_url_match.group(1)
                 if invalid_url(url):
-                    print(f"Post ID: {post_id} remove <a> href with URL: {url}")
+                    print(f"Post ID: {post_id} remove <a> with URL: {url}")
                     post_content = post_content.replace(link, '')
                     update = True
 
@@ -187,6 +212,24 @@ def update_a_tags():
             wp.get_wp_update_post_content(post_id, cleaned_content)
 
 
+def update_iframe_tags():
+    print("Fetching WordPress post content...")
+    posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
+                            to_post_date=WP_QUERY['select_posts_to_date'],
+                            where="post_content LIKE '%<iframe %'")
+
+    if not posts:
+        print("No posts found.")
+        return
+
+    print(f"Checking {len(posts)} <iframe> src URLs...")
+    for post_id, post_content in posts:
+        # Remove captions if image URL is valid
+        update, cleaned_content = update_iframe_src(post_id, post_content)
+        if update:
+            print(f"Updating post {post_id} with cleaned content")
+            wp.get_wp_update_post_content(post_id, cleaned_content)
+
 
 if __name__ == "__main__":
-    update_a_tags()
+    update_iframe_tags()
