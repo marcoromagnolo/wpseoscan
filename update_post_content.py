@@ -37,9 +37,9 @@ def invalid_url(url, check_local=False):
         elif response.status_code == 404:
             print(f"Error at URL: {url} with code: {response.status_code}")
             return True
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f"Invalid endpoint - Error checking URL: {url} - {e}")
-        return False
+        return True
 
 
 # Function to remove caption blocks based on image URL validity
