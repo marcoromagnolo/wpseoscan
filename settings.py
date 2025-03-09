@@ -24,9 +24,11 @@ WORK_DIR = 'storage'
 OPENAI_SECRET = ''
 
 WP_QUERY = {
-    'select_posts_from_date': '2024-01-01 00:00:00',
-    'select_posts_to_date': '2025-01-01 00:00:00'
+    'select_posts_from_date': '2014-01-01 00:00:00',
+    'select_posts_to_date': '2026-12-06 00:00:00'
 }
+
+BASE_URL = ''
 
 WP_SETTINGS = {
     'host': 'localhost',
