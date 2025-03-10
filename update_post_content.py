@@ -149,8 +149,7 @@ def update_img_src(post_id, post_content):
 def update_custom_tag(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     pattern = re.compile(
-        r'<!-- wp:paragraph -->\s*<p>Fonte:</p>\s*<!-- /wp:paragraph -->\s*'
-        r'<!-- wp:paragraph -->\s*<p><a href="([^"]+)">[^<]*</a></p>\s*<!-- /wp:paragraph -->',
+        r'<p><a href="([^"]+)">https?://[^<]+</a></p>',
         re.DOTALL
     )
 
@@ -159,6 +158,7 @@ def update_custom_tag(post_id, post_content):
 
     # Find all the caption blocks
     new_content = re.sub(pattern, replacement_template, post_content)
+    new_content = new_content.replace("\\", "")
     update = False
     if new_content != post_content:
         print(f"Post ID: {post_id} update fonte.")
