@@ -146,6 +146,27 @@ def update_img_src(post_id, post_content):
     return update, post_content
 
 
+def update_custom_tag(post_id, post_content):
+    # Regular expression pattern to find all caption shortcodes
+    pattern = re.compile(
+        r'<!-- wp:paragraph -->\s*<p>Fonte:</p>\s*<!-- /wp:paragraph -->\s*'
+        r'<!-- wp:paragraph -->\s*<p><a href="([^"]+)">[^<]*</a></p>\s*<!-- /wp:paragraph -->',
+        re.DOTALL
+    )
+
+    # 🔄 Replacement Template
+    replacement_template = r'<p><a href="\1">Fonte dell\'articolo.</a></p>'
+
+    # Find all the caption blocks
+    new_content = re.sub(pattern, replacement_template, post_content)
+    update = False
+    if new_content != post_content:
+        print(f"Post ID: {post_id} update fonte.")
+        update = True
+
+    return update, new_content
+
+
 def update_figure_tags(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     caption_pattern = r'<figure.*?>(.*?)</figure>'
@@ -231,5 +252,24 @@ def update_iframe_tags():
             wp.get_wp_update_post_content(post_id, cleaned_content)
 
 
+def update_custom_html():
+    print("Fetching WordPress post content...")
+    posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
+                            to_post_date=WP_QUERY['select_posts_to_date'],
+                            where="(post_content LIKE '%>http://%' OR post_content LIKE '%>https://%')")
+
+    if not posts:
+        print("No posts found.")
+        return
+
+    print(f"Checking {len(posts)} unformatted URLs...")
+    for post_id, post_content in posts:
+        # Remove captions if image URL is valid
+        update, cleaned_content = update_custom_tag(post_id, post_content)
+        if update:
+            print(f"Updating post {post_id} with cleaned content")
+            wp.get_wp_update_post_content(post_id, cleaned_content)
+
+
 if __name__ == "__main__":
-    update_iframe_tags()
+    update_custom_html()
