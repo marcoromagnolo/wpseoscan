@@ -150,7 +150,7 @@ def update_custom_tag(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     pattern = re.compile(
         r'<p>Fonte:.*?<a href="([^"]+)">https?://[^<]+</a>.*?</p>',
-        re.DOTALL
+        re.DOTALL | re.IGNORECASE
     )
 
     # Replacement Template
