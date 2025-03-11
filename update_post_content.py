@@ -149,11 +149,11 @@ def update_img_src(post_id, post_content):
 def update_custom_tag(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     pattern = re.compile(
-        r'<p>Fonte: <a href="([^"]+)">https?://[^<]+</a></p>',
+        r'<p>Fonte:.*?<a href="([^"]+)">https?://[^<]+</a>.*?</p>',
         re.DOTALL
     )
 
-    # 🔄 Replacement Template
+    # Replacement Template
     replacement_template = r'<p><a href="\1">Fonte dell\'articolo.</a></p>'
 
     # Find all the caption blocks
