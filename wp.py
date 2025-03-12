@@ -20,7 +20,8 @@ def get_order_by(orders):
     return ""
 
 
-def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post', where=None):
+def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post',
+                 where=None, limit=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
 
@@ -29,10 +30,15 @@ def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now
     else:
         where = ''
 
+    if limit:
+        limit = f"LIMIT {limit}"
+    else:
+        limit = ''
+
     select_query = f"""
         SELECT id, post_content from wp_posts 
         WHERE post_type = '{post_type}' AND post_status = '{status}'
-        AND post_date BETWEEN %s AND %s {where} ORDER BY id
+        AND post_date BETWEEN %s AND %s {where} ORDER BY id {limit}
     """
 
     try:

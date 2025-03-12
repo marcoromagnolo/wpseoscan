@@ -149,7 +149,8 @@ def update_img_src(post_id, post_content):
 def update_custom_tag(post_id, post_content):
     # Regular expression pattern to find all caption shortcodes
     pattern = re.compile(
-        r'<p>Fonti:.*?<a href="([^"]+)">https?://[^<]+</a>.*?</p>',
+            r'<p>Font.*?<a href="([^"]+)">.*?</a>.*?</p>',
+
         re.DOTALL | re.IGNORECASE
     )
 
