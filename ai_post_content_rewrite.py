@@ -1,9 +1,10 @@
+import random
 import re
+import time
 from urllib.parse import urlparse
-
+from playwright.sync_api import sync_playwright
 import requests
 from bs4 import BeautifulSoup
-
 import openai
 import wp
 
@@ -18,19 +19,21 @@ def is_invalid(text):
     return False
 
 
-def get_page_title(url):
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
+def get_title_with_plsywright(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context()  # Creates a new, clean browser context
+        page = context.new_page()
 
-        # Parse the HTML of the page
-        soup = BeautifulSoup(response.text, 'html.parser')
+        try:
+            page.goto(url, timeout=30000)  # Waits up to 30 seconds for the page to load fully
+            title = page.title()
+            return title
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            browser.close()
 
-        # Find the <title> tag and return its content
-        title = soup.title.string.strip() if soup.title else None
-        return title
-    except requests.RequestException as e:
-        print(f"Error: {e}")
 
 def get_title_and_links(post_id, post_content):
     # Parse the HTML content
@@ -48,7 +51,7 @@ def get_title_and_links(post_id, post_content):
         url = a['href']
         description = a.get_text()
         if is_invalid(description):
-            title = get_page_title(url)
+            title = get_title_with_plsywright(url)
             if title:
                 links.append({'url': url, 'description': title})
                 if parent_ul is None:

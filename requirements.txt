@@ -1,4 +1,5 @@
 mysql-connector-python==8.1.0
+playwright
 Flask
 requests
 beautifulsoup4
