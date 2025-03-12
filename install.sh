@@ -6,6 +6,8 @@ source ./.venv/bin/activate
 
 # Install Python packages
 pip install -r requirements.txt
+playwright install
+sudo apt-get install libenchant-2-2 libmanette-0.2-0
 python3 -m spacy download it_core_news_sm
 #python3 -m spacy download it_core_news_md
 #python3 -m spacy download it_core_news_lg
