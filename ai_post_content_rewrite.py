@@ -48,18 +48,19 @@ def get_title_and_links(post_id, post_content):
     # Check if the URL is valid
     parent_ul = None
     for a in a_list:
-        url = a['href']
-        description = a.get_text()
-        if is_invalid(description):
-            title = get_title_with_plsywright(url)
-            if title:
-                links.append({'url': url, 'description': title})
-                if parent_ul is None:
-                    parent_ul = a.find_parent('ul')
-                    p = parent_ul.find_previous('p')
-                    if p and "Links:" in p.get_text():
-                        p.extract()
-                    parent_ul.extract()
+        if a.has_key('href'):
+            url = a['href']
+            description = a.get_text()
+            if is_invalid(description):
+                title = get_title_with_plsywright(url)
+                if title:
+                    links.append({'url': url, 'description': title})
+                    if parent_ul is None:
+                        parent_ul = a.find_parent('ul')
+                        p = parent_ul.find_previous('p')
+                        if p and "Links:" in p.get_text():
+                            p.extract()
+                        parent_ul.extract()
 
 
     if parent_ul:
