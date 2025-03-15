@@ -21,7 +21,7 @@ def get_order_by(orders):
 
 
 def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post',
-                 where=None, limit=None):
+                 where=None, order='ASC', limit=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
 
@@ -38,7 +38,7 @@ def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now
     select_query = f"""
         SELECT id, post_content from wp_posts 
         WHERE post_type = '{post_type}' AND post_status = '{status}'
-        AND post_date BETWEEN %s AND %s {where} ORDER BY id {limit}
+        AND post_date BETWEEN %s AND %s {where} ORDER BY id {limit} {order}
     """
 
     try:
@@ -86,7 +86,7 @@ def get_wp_post_featured_image(post_id):
         db_connection.close()
 
 
-def get_wp_update_post_content(post_id, cleaned_content):
+def wp_update_post_content(post_id, cleaned_content):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
     update_query = f"""
@@ -98,6 +98,44 @@ def get_wp_update_post_content(post_id, cleaned_content):
     try:
         db_cursor.execute(update_query, (cleaned_content, post_id))
         db_connection.commit()
+    finally:
+        db_cursor.close()
+        db_connection.close()
+
+
+def search_wp_post_titles(entity):
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    select_query = f"""
+            SELECT id, post_title from wp_posts 
+            WHERE post_type = 'post' AND post_status = 'publish'
+            AND post_title LIKE %s order by ID desc limit 10
+        """
+
+    try:
+        db_cursor.execute(select_query, (f"%{entity}%", ))
+        posts = {}
+        for row in db_cursor.fetchall():
+            posts[row[0]] = row[1]
+        return posts
+    finally:
+        db_cursor.close()
+        db_connection.close()
+
+
+def get_post_guid(post_id):
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    select_query = """
+            SELECT guid from wp_posts 
+            WHERE id = %s
+        """
+
+    try:
+        db_cursor.execute(select_query, (post_id,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
     finally:
         db_cursor.close()
         db_connection.close()
