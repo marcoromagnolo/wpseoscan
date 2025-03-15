@@ -8,7 +8,7 @@ import wp
 import settings
 import pidman
 import logg
-from tfidf import Tfidf
+# from tfidf import Tfidf
 import openai
 from bs4 import BeautifulSoup, NavigableString
 
@@ -139,21 +139,21 @@ def post_update_anchors():
 
     return jsonify(response), 200
 
-@app.route('/get/<post_id>', methods=['GET'])
-def load(post_id):
-    """
-    Load a Post with candidate keywords
-    """
-    v = Tfidf(logger)
-    post_keywords = v.get_post_words(post_id)
-    all_keywords = v.get_keywords()
-    links = []
-    for post_keyword in post_keywords:
-        for keyword_post_id, keyword in all_keywords:
-            if post_keyword == keyword:
-                links.append({keyword, keyword_post_id})
-
-    return jsonify({'links' : links, 'post_keywords' : post_keywords}), 200
+# @app.route('/get/<post_id>', methods=['GET'])
+# def load(post_id):
+#     """
+#     Load a Post with candidate keywords
+#     """
+#     v = Tfidf(logger)
+#     post_keywords = v.get_post_words(post_id)
+#     all_keywords = v.get_keywords()
+#     links = []
+#     for post_keyword in post_keywords:
+#         for keyword_post_id, keyword in all_keywords:
+#             if post_keyword == keyword:
+#                 links.append({keyword, keyword_post_id})
+#
+#     return jsonify({'links' : links, 'post_keywords' : post_keywords}), 200
 
 
 # def init_entities():
