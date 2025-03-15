@@ -49,7 +49,7 @@ def get_title_and_links(post_id, post_content):
     soup = BeautifulSoup(post_content, 'html.parser')
 
     # Find the <p> tag that contains the text 'Links:'
-    p_tag = soup.find('p', string=re.compile(r'Links:'))
+    p_tag = soup.find('p', string=re.compile(r'\s*Links:\s*', re.IGNORECASE))
 
     # Extract the URLs from the <a> tags
     links = []
