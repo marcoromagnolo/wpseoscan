@@ -35,44 +35,33 @@ def get_title_with_plsywright(url):
             browser.close()
 
 
-def get_next_a(p_tag):
-    a_list =[]
-    next = p_tag
-    while next.find_next('a'):
-        next = next.find_next('a')
-        a_list.append(next)
-    return a_list
-
-
 def get_title_and_links(post_id, post_content):
     # Parse the HTML content
     soup = BeautifulSoup(post_content, 'html.parser')
 
-    # Find the <p> tag that contains the text 'Links:'
-    p_tag = soup.find('p', string=re.compile(r'\s*Links:\s*', re.IGNORECASE))
+    # Use CSS selector to select all <a> tags within <ul><li>
+    a_list = soup.select('p ul li a')
 
     # Extract the URLs from the <a> tags
     links = []
 
-    # Check if the <p> tag was found
-    if p_tag:
-        # Find all <a> tags inside this <p> tag
-        a_list = p_tag.find_all('a')
+    # Check if the URL is valid
+    parent_p = None
+    for a in a_list:
+        if a.has_attr('href'):
+            url = a['href']
+            description = a.get_text()
+            if is_invalid(description):
+                title = get_title_with_plsywright(url)
+                if title:
+                    links.append({'url': url, 'description': title})
+                    if parent_p is None:
+                        parent_p = a.find_parent('p')
 
-        if not a_list:
-            a_list = get_next_a(p_tag)
-        # Check if the URL is valid
-        for a in a_list:
-            if a.has_attr('href'):
-                url = a['href']
-                description = a.get_text()
-                if is_invalid(description):
-                    title = get_title_with_plsywright(url)
-                    if title:
-                        links.append({'url': url, 'description': title})
-                a.extract()
 
-        p_tag.extract()
+
+    if parent_p:
+        parent_p.extract()
 
     return links, str(soup)
 
