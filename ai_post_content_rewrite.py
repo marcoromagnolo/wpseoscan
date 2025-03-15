@@ -40,10 +40,14 @@ def get_title_and_links(post_id, post_content):
     soup = BeautifulSoup(post_content, 'html.parser')
 
     # Use CSS selector to select all <a> tags within <ul><li>
-    p_tag = soup.find('p', string=re.compile(r'\s*Links:\s*'))
+    p_tags = soup.find_all('p')
     a_list = []
-    if p_tag:
-        a_list = p_tag.find_all('a')
+    if p_tags:
+        for p_tag in p_tags:
+            if "Links:" in p_tag.get_text():
+                a_list = p_tag.find_all('a')
+                break
+
 
     # Extract the URLs from the <a> tags
     links = []
