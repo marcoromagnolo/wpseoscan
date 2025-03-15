@@ -8,8 +8,6 @@ import wp
 import settings
 import pidman
 import logg
-import util
-from entity import semantic_search, extract_entities
 from tfidf import Tfidf
 import openai
 from bs4 import BeautifulSoup, NavigableString
@@ -158,44 +156,44 @@ def load(post_id):
     return jsonify({'links' : links, 'post_keywords' : post_keywords}), 200
 
 
-def init_entities():
-    logger.info('Start init process')
+# def init_entities():
+#     logger.info('Start init process')
+#
+#     # Load Wordpress Posts (post_id, post_content)]
+#     posts = {}
+#     for row in wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
+#                                to_post_date=settings.WP_QUERY['select_posts_to_date']):
+#         post_id = row[0]
+#         post_text = util.clean_html(row[1]).replace('\n', '')
+#
+#         entities = extract_entities(post_text)
+#         # print(f"Text: {post_text}")
+#         print(f"Entities extracted from Post ID {post_id}:", entities)
+#
+#         # Step 2: For each entity, perform semantic search in the other articles
+#         # for entity in entities:
+#         #     print(f"\nSemantic search for entity: {entity}")
+#         #     best_article, score = semantic_search(entity, posts)
+#         #     print(f"\n🔹 Best match for entity '{entity}':")
+#         #     print(f"   - Article: {best_article}")
+#         #     print(f"   - Similarity Score: {score:.4f}")
 
-    # Load Wordpress Posts (post_id, post_content)]
-    posts = {}
-    for row in wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
-                               to_post_date=settings.WP_QUERY['select_posts_to_date']):
-        post_id = row[0]
-        post_text = util.clean_html(row[1]).replace('\n', '')
 
-        entities = extract_entities(post_text)
-        # print(f"Text: {post_text}")
-        print(f"Entities extracted from Post ID {post_id}:", entities)
-
-        # Step 2: For each entity, perform semantic search in the other articles
-        # for entity in entities:
-        #     print(f"\nSemantic search for entity: {entity}")
-        #     best_article, score = semantic_search(entity, posts)
-        #     print(f"\n🔹 Best match for entity '{entity}':")
-        #     print(f"   - Article: {best_article}")
-        #     print(f"   - Similarity Score: {score:.4f}")
-
-
-def init_tfidf():
-    logger.info('Start init process')
-
-    # Load Wordpress Posts (post_id, post_content)
-    posts = wp.get_wp_id_posts()
-
-    v = Tfidf(logger)
-    data = []
-    for post in posts:
-        text = util.clean_html(post[1])
-        # build a data array for building with vectorizer
-        data.append((post[0], text))
-    v.build_vectorizer(data)
-
-    logger.info('Init process completed')
+# def init_tfidf():
+#     logger.info('Start init process')
+#
+#     # Load Wordpress Posts (post_id, post_content)
+#     posts = wp.get_wp_id_posts()
+#
+#     v = Tfidf(logger)
+#     data = []
+#     for post in posts:
+#         text = util.clean_html(post[1])
+#         # build a data array for building with vectorizer
+#         data.append((post[0], text))
+#     v.build_vectorizer(data)
+#
+#     logger.info('Init process completed')
 
 
 if __name__ == '__main__':
