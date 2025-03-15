@@ -78,7 +78,7 @@ def update_posts():
     print("Fetching WordPress post content...")
     posts = wp.get_wp_posts(from_post_date=WP_QUERY['select_posts_from_date'],
                             to_post_date=WP_QUERY['select_posts_to_date'],
-                            where="post_author = 2")
+                            where="post_author = 2 AND post_content LIKE '%Links:%'")
 
     if not posts:
         print("No posts found.")
