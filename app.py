@@ -45,7 +45,7 @@ def health_check():
     return jsonify({"status": "running"}), 200
 
 
-def is_inside_a_text_node(soup, first_index):
+def is_inside_bad_html_tag(soup, first_index):
     """Check if the given index is inside an <a> tag text."""
     current_index = 0
 
@@ -104,22 +104,24 @@ def update_anchors(content):
                  'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli: {titles}'},
                 {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto."}])
 
-            if entity in content:
-                # Find the position of the entity in the text
-                start_index = content.find(entity)
-                if start_index and not is_inside_a_text_node(soup, start_index):
-                    end_index = start_index + len(entity)
+            results = soup.find_all(string=entity)
+            for result in results:
 
-                    # Replace the entity with the new <a> tag
-                    url = wp.get_post_guid(int(post_id))
-                    new_link = f"<a href='{url}'>{entity}</a>"
+                # skip if the text is already linked
+                if result.parent.name == 'a':
+                    continue
 
-                    # Append content before the entity, the link, and content after the entity
-                    content = content[:start_index] + new_link + content[end_index:]
+                # Replace the entity with the new <a> tag
+                url = wp.get_post_guid(int(post_id))
+                new_link = soup.new_tag('a', href=url)
+                new_link.string = entity
 
-                    print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
+                # Replace the text with the new <a> tag
+                result.replace_with(new_link)
 
-    return content
+                print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
+
+    return str(soup)
 
 
 @app.route('/post/update-anchors', methods=['POST'])
