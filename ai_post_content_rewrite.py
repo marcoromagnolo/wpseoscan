@@ -100,7 +100,7 @@ def update_posts():
             if ai_content.startswith("```"):
                 ai_content = ai_content[3:-3]
             print(f"Updating post {post_id} with ai content: {ai_content}")
-            wp.get_wp_update_post_content(post_id, ai_content)
+            wp.wp_update_post_content(post_id, ai_content)
             posts_updated += 1
     print(f"{posts_updated} posts updated correctly")
 

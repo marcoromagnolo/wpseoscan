@@ -212,7 +212,7 @@ def update_img_tags():
         update, cleaned_content = update_img_src(post_id, post_content)
         if update:
             print(f"Updating post {post_id} with cleaned content")
-            wp.get_wp_update_post_content(post_id, cleaned_content)
+            wp.wp_update_post_content(post_id, cleaned_content)
 
 
 def update_a_tags():
@@ -231,7 +231,7 @@ def update_a_tags():
         update, cleaned_content = update_a_href(post_id, post_content)
         if update:
             print(f"Updating post {post_id} with cleaned content")
-            wp.get_wp_update_post_content(post_id, cleaned_content)
+            wp.wp_update_post_content(post_id, cleaned_content)
 
 
 def update_iframe_tags():
@@ -250,7 +250,7 @@ def update_iframe_tags():
         update, cleaned_content = update_iframe_src(post_id, post_content)
         if update:
             print(f"Updating post {post_id} with cleaned content")
-            wp.get_wp_update_post_content(post_id, cleaned_content)
+            wp.wp_update_post_content(post_id, cleaned_content)
 
 
 def update_custom_html():
@@ -269,7 +269,7 @@ def update_custom_html():
         update, cleaned_content = update_custom_tag(post_id, post_content)
         if update:
             print(f"Updating post {post_id} with cleaned content")
-            wp.get_wp_update_post_content(post_id, cleaned_content)
+            wp.wp_update_post_content(post_id, cleaned_content)
 
 
 if __name__ == "__main__":
