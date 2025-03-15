@@ -46,7 +46,6 @@ def health_check():
 
 
 def update_anchors(content):
-    soup = BeautifulSoup(content, 'html.parser')
 
     # get all entities from the content
     result_text = openai.completions(messages=[
@@ -66,7 +65,6 @@ def update_anchors(content):
 
     # replace entities with anchor text
     titles = {}
-    p_tags = soup.find_all('p')
     for entity in result['entities']:
 
         # skip unwanted entities
@@ -89,29 +87,22 @@ def update_anchors(content):
 
             url = wp.get_post_guid(int(post_id))
 
-            for p_tag in p_tags:
-                if entity in p_tag.text:
-                    # Find the position of the entity in the text
-                    text = p_tag.text
-                    start_index = text.find(entity)
-                    if start_index:
-                        end_index = start_index + len(entity)
+            if entity in content:
+                # Find the position of the entity in the text
+                start_index = content.find(entity)
+                if start_index:
+                    end_index = start_index + len(entity)
 
-                        # Replace the entity with the new <a> tag
-                        new_link = soup.new_tag('a', href=url)
-                        new_link.string = entity
+                    # Replace the entity with the new <a> tag
+                    new_link = f"<a href='{url}'>{entity}</a>"
 
-                        # Clear the paragraph tag
-                        p_tag.clear()
+                    # Append content before the entity, the link, and content after the entity
+                    content = content[:start_index] + new_link + content[end_index:]
 
-                        # Append content before the entity, the link, and content after the entity
-                        p_tag.append(NavigableString(text[:start_index]))
-                        p_tag.append(new_link)
-                        p_tag.append(NavigableString(text[end_index:]))
-                        print(f"Entity {entity} replaced with anchor text {new_link}")
-                        break
+                    print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
+                    break
 
-    return str(soup)
+    return content
 
 
 @app.route('/post/update-anchors', methods=['POST'])
