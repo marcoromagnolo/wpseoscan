@@ -45,7 +45,26 @@ def health_check():
     return jsonify({"status": "running"}), 200
 
 
+def is_inside_a_text_node(soup, first_index):
+    """Check if the given index is inside an <a> tag text."""
+    current_index = 0
+
+    for element in soup.find_all(string=True, recursive=True):
+        if isinstance(element, NavigableString):
+            text_length = len(element)
+
+            if current_index <= first_index < current_index + text_length:
+                # Found the text element containing the index
+                parent = element.parent
+                if parent and parent.name == 'a':  # Check if the text is within an <a> tag
+                    print(f"Error: Index {first_index} is inside an <a> tag text: {element}")
+                    return True
+                else:
+                    return False
+
+
 def update_anchors(content):
+    soup = BeautifulSoup(content, 'html.parser')
 
     # get all entities from the content
     result_text = openai.completions(messages=[
@@ -76,8 +95,8 @@ def update_anchors(content):
             continue
 
         titles[entity] = wp.search_wp_post_titles(entity)
-
         if titles[entity]:
+
             post_id = openai.completions(messages=[
                 {"role": "system",
                  "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
@@ -85,22 +104,20 @@ def update_anchors(content):
                  'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli: {titles}'},
                 {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto."}])
 
-            url = wp.get_post_guid(int(post_id))
-
             if entity in content:
                 # Find the position of the entity in the text
                 start_index = content.find(entity)
-                if start_index:
+                if start_index and not is_inside_a_text_node(soup, start_index):
                     end_index = start_index + len(entity)
 
                     # Replace the entity with the new <a> tag
+                    url = wp.get_post_guid(int(post_id))
                     new_link = f"<a href='{url}'>{entity}</a>"
 
                     # Append content before the entity, the link, and content after the entity
                     content = content[:start_index] + new_link + content[end_index:]
 
                     print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
-                    break
 
     return content
 
