@@ -63,6 +63,16 @@ def is_inside_bad_html_tag(soup, first_index):
                     return False
 
 
+def replace_with_link(element, entity, url):
+    new_link = f'<a href="{url}">{entity}</a>'
+    text = element.get_text().replace(entity, new_link)
+    new_content = BeautifulSoup(text, 'html.parser')
+
+    # Replace the element in the original soup
+    element.replace_with(new_content)
+    print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
+
+
 def update_anchors(content, post_id=None):
     soup = BeautifulSoup(content, 'html.parser')
 
@@ -98,7 +108,6 @@ def update_anchors(content, post_id=None):
 
         print(f"Searching for entity: {entity}")
         titles[entity] = wp.search_wp_post_titles(entity, not_id=post_id)
-        print(f"Titles found for entity '{entity}': {titles[entity]}")
 
         element = None
         elements = soup.find_all(string=lambda tag: entity in tag.get_text())
@@ -109,26 +118,29 @@ def update_anchors(content, post_id=None):
                 print(f"Skipping already linked entity: {entity}")
                 continue
 
-        if element and titles[entity]:
-            post_id = openai.completions(messages=[
-                {"role": "system",
-                 "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
-                {'role': 'user',
-                 'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
-                {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure zero se il titolo non è inerente a: {content}"}])
-            post_id = int(post_id)
+        if element:
+            if titles[entity]:
+                print(f"Titles found for entity '{entity}': {titles[entity]}")
+                post_id = openai.completions(messages=[
+                    {"role": "system",
+                     "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
+                    {'role': 'user',
+                     'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
+                    {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure zero se il titolo non è inerente a: {content}"}])
+                post_id = int(post_id)
 
-            if post_id:
-                # Replace the entity with the new <a> tag
-                url = wp.get_post_permalink(post_id)
-                new_link = f'<a href="{url}">{entity}</a>'
+                if post_id:
+                    # Replace the entity with the new <a> tag
+                    url = wp.get_post_permalink(post_id)
 
-                text = element.get_text().replace(entity, new_link)
-                new_content = BeautifulSoup(text, 'html.parser')
+                    replace_with_link(element, entity, url)
 
-                # Replace the element in the original soup
-                element.replace_with(new_content)
-                print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
+            else:
+                tag_name = wp.search_wp_tag(entity)
+                if tag_name:
+                    print(f"Tag found for entity '{entity}': {tag_name}")
+                    url = f"{settings.BASE_URL}/tag/{tag_name.replace(' ', '-').lower()}"
+                    replace_with_link(element, entity, url)
 
     content = str(soup)
     return content
