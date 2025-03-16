@@ -125,6 +125,24 @@ def search_wp_post_titles(entity, not_id=None):
         db_connection.close()
 
 
+def search_wp_tag(entity):
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    select_query = f"""
+            SELECT name from wp_terms 
+            WHERE name LIKE %s
+        """
+
+    try:
+        db_cursor.execute(select_query, (f"%{entity}%", ))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
+    finally:
+        db_cursor.close()
+        db_connection.close()
+
+
 def get_post_permalink(post_id):
     """ Select the permalink for a post """
     db_connection = open_connection()
