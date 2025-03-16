@@ -69,9 +69,9 @@ def update_anchors(content):
     # get all entities from the content
     result_text = openai.completions(messages=[
         {"role": "system",
-         "content": "Sei un SEO Content Specialist e devi individuare tutte le entità contenute in un contenuto HTML. Rispondi solo con un oggetto JSON valido, senza spiegazioni."},
+         "content": "Sei un SEO Content Specialist e devi individuare le entità contenute in un contenuto HTML. Rispondi solo con un oggetto JSON valido, senza spiegazioni."},
         {'role': 'user',
-         'content': f"Estrai tutte le entità (persone, luoghi, organizzazioni, momenti storici, eventi, prodotti, concetti, opere e lingue) dal seguente articolo in modo che possano essere utilizzati com anchor text per creare link ad altri articoli ed aumentare il SEO: {content}"},
+         'content': f"Estrai le migliori 10 entità (persone, luoghi, organizzazioni, momenti storici, eventi, prodotti, concetti, opere e lingue) dal seguente articolo in modo che possano essere utilizzati com anchor text per creare link ad altri articoli ed aumentare il SEO: {content}"},
         {"role": "user",
          "content": "Rispondi esclusivamente con un oggetto JSON valido nel seguente formato: {\"entities\": [\"entity1\", \"entity2\", ...]}"}])
     if result_text.startswith("```json"):
@@ -87,41 +87,51 @@ def update_anchors(content):
     for entity in result['entities']:
 
         # skip unwanted entities
-        if entity.lower() in ['iflscience', 'sciencealert', 'interestingengineering']:
+        if entity.lower() in [settings.BLACKLIST_ENTITIES]:
+            print(f"Skipping entity: {entity}")
             continue
 
         # skip numbers
         if entity.isdigit():
+            print(f"Skipping number: {entity}")
             continue
 
+        print(f"Searching for entity: {entity}")
         titles[entity] = wp.search_wp_post_titles(entity)
-        if titles[entity]:
+        print(f"Titles found for entity '{entity}': {titles[entity]}")
 
+        element = None
+        elements = soup.find_all(string=lambda tag: entity in tag.get_text())
+        if elements:
+            element = elements[0]
+            # skip if the text is already linked
+            if element.parent.name == 'a':
+                print(f"Skipping already linked entity: {entity}")
+                continue
+
+        if element and titles[entity]:
             post_id = openai.completions(messages=[
                 {"role": "system",
                  "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
                 {'role': 'user',
-                 'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli: {titles}'},
-                {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto."}])
+                 'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
+                {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure zero se il titolo non è inerente a: {content}"}])
+            post_id = int(post_id)
 
-            results = soup.find_all(string=entity)
-            for result in results:
-
-                # skip if the text is already linked
-                if result.parent.name == 'a':
-                    continue
-
+            if post_id:
                 # Replace the entity with the new <a> tag
-                url = wp.get_post_guid(int(post_id))
-                new_link = soup.new_tag('a', href=url)
-                new_link.string = entity
+                url = wp.get_post_guid(post_id)
+                new_link = f'<a href="{url}">{entity}</a>'
 
-                # Replace the text with the new <a> tag
-                result.replace_with(new_link)
+                text = element.get_text().replace(entity, new_link)
+                new_content = BeautifulSoup(text, 'html.parser')
 
+                # Replace the element in the original soup
+                element.replace_with(new_content)
                 print(f"Entity '{entity}' replaced with anchor text '{new_link}'")
 
-    return str(soup)
+    content = str(soup)
+    return content
 
 
 @app.route('/post/update-anchors', methods=['POST'])
@@ -215,7 +225,7 @@ if __name__ == '__main__':
     # Users: redazione(2), marco.bianchi(13), francesca.moretti(14)
     posts = wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
                             to_post_date=settings.WP_QUERY['select_posts_to_date'],
-                            where="post_author = 2", order='DESC')
+                            where=f"post_author = {settings.WP_QUERY['post_author']}", order='DESC')
     for post in posts:
         post_id = post[0]
         post_content = post[1]
