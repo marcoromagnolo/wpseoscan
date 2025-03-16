@@ -63,7 +63,7 @@ def is_inside_bad_html_tag(soup, first_index):
                     return False
 
 
-def update_anchors(content):
+def update_anchors(content, post_id=None):
     soup = BeautifulSoup(content, 'html.parser')
 
     # get all entities from the content
@@ -97,7 +97,7 @@ def update_anchors(content):
             continue
 
         print(f"Searching for entity: {entity}")
-        titles[entity] = wp.search_wp_post_titles(entity)
+        titles[entity] = wp.search_wp_post_titles(entity, not_id=post_id)
         print(f"Titles found for entity '{entity}': {titles[entity]}")
 
         element = None
@@ -120,7 +120,7 @@ def update_anchors(content):
 
             if post_id:
                 # Replace the entity with the new <a> tag
-                url = wp.get_post_guid(post_id)
+                url = wp.get_post_permalink(post_id)
                 new_link = f'<a href="{url}">{entity}</a>'
 
                 text = element.get_text().replace(entity, new_link)
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     for post in posts:
         post_id = post[0]
         post_content = post[1]
-        post_content = update_anchors(post_content)
+        post_content = update_anchors(post_content, post_id)
         print(f"Updating post {post_id} with content: {post_content}")
         wp.wp_update_post_content(post_id, post_content)
 

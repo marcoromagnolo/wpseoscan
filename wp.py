@@ -103,12 +103,12 @@ def wp_update_post_content(post_id, cleaned_content):
         db_connection.close()
 
 
-def search_wp_post_titles(entity):
+def search_wp_post_titles(entity, not_id=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
     select_query = f"""
             SELECT id, post_title from wp_posts 
-            WHERE post_type = 'post' AND post_status = 'publish'
+            WHERE post_type = 'post' AND post_status = 'publish' 
             AND post_title LIKE %s order by ID desc limit 10
         """
 
@@ -116,8 +116,40 @@ def search_wp_post_titles(entity):
         db_cursor.execute(select_query, (f"%{entity}%", ))
         posts = {}
         for row in db_cursor.fetchall():
+            if not_id and row[0] == not_id:
+                continue
             posts[row[0]] = row[1]
         return posts
+    finally:
+        db_cursor.close()
+        db_connection.close()
+
+
+def get_post_permalink(post_id):
+    """ Select the permalink for a post """
+    db_connection = open_connection()
+    db_cursor = db_connection.cursor()
+    select_query = """
+            SELECT 
+                CONCAT(
+                    '/', 
+                    DATE_FORMAT(post_date, '%Y/%m/%d/'), 
+                    post_name, 
+                    '-', 
+                    LPAD(SECOND(post_date), 2, '0'), 
+                    ID
+                )
+            FROM wp_posts
+            WHERE post_type = 'post'
+            AND post_status = 'publish'
+            WHERE id = %s
+        """
+
+    try:
+        db_cursor.execute(select_query, (post_id,))
+        row = db_cursor.fetchone()
+        if row:
+            return row[0]
     finally:
         db_cursor.close()
         db_connection.close()
