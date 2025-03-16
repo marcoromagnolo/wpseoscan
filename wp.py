@@ -142,7 +142,7 @@ def get_post_permalink(post_id):
             FROM wp_posts
             WHERE post_type = 'post'
             AND post_status = 'publish'
-            WHERE id = %s
+            AND id = %s
         """
 
     try:
