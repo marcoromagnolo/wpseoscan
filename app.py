@@ -139,7 +139,7 @@ def update_anchors(content, post_id=None):
                 tag_name = wp.search_wp_tag(entity)
                 if tag_name:
                     print(f"Tag found for entity '{entity}': {tag_name}")
-                    url = f"{settings.BASE_URL}/tag/{tag_name.replace(' ', '-').lower()}"
+                    url = f"/tag/{tag_name.replace(' ', '-').lower()}"
                     replace_with_link(element, entity, url)
 
     content = str(soup)
