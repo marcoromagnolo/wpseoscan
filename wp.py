@@ -134,7 +134,7 @@ def search_wp_tag(entity):
         """
 
     try:
-        db_cursor.execute(select_query, (f"%{entity}%", ))
+        db_cursor.execute(select_query, (f"{entity}", ))
         row = db_cursor.fetchone()
         if row:
             return row[0]
