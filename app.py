@@ -126,7 +126,7 @@ def update_anchors(content, post_id=None):
                      "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
                     {'role': 'user',
                      'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
-                    {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure zero se il titolo non è inerente a: {content}"}])
+                    {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure 0 se il titolo non è inerente a: {content}"}])
                 post_id = int(post_id)
 
                 if post_id:
