@@ -241,7 +241,7 @@ if __name__ == '__main__':
     # Users: redazione(2), marco.bianchi(13), francesca.moretti(14)
     posts = wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
                             to_post_date=settings.WP_QUERY['select_posts_to_date'],
-                            where=f"post_author = {settings.WP_QUERY['post_author']}", order='DESC')
+                            where=f"post_author = {settings.WP_QUERY['post_author']}", order='ASC')
     for post in posts:
         post_id = post[0]
         post_content = post[1]
