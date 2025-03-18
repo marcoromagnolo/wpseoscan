@@ -85,9 +85,9 @@ def update_anchors(content, post_id=None):
              'content': f"Estrai le migliori 10 entità (persone, luoghi, organizzazioni, momenti storici, eventi, prodotti, concetti, opere e lingue) dal seguente articolo in modo che possano essere utilizzati com anchor text per creare link ad altri articoli ed aumentare il SEO: {content}"},
             {"role": "user",
              "content": "Rispondi esclusivamente con un oggetto JSON valido nel seguente formato: {\"entities\": [\"entity1\", \"entity2\", ...]}"}])
-        if result_text.startswith("```json"):
+        if result_text.startswith("```json") and result_text.endswith("```"):
             result_text = result_text[8:-3]
-        elif result_text.startswith("```"):
+        elif result_text.startswith("```") and result_text.endswith("```"):
             result_text = result_text[3:-3]
         result = json.loads(result_text)
         if 'entities' not in result:
