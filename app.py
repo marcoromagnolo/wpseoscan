@@ -74,75 +74,79 @@ def replace_with_link(element, entity, url):
 
 
 def update_anchors(content, post_id=None):
-    soup = BeautifulSoup(content, 'html.parser')
+    try:
+        soup = BeautifulSoup(content, 'html.parser')
 
-    # get all entities from the content
-    result_text = openai.completions(messages=[
-        {"role": "system",
-         "content": "Sei un SEO Content Specialist e devi individuare le entità contenute in un contenuto HTML. Rispondi solo con un oggetto JSON valido, senza spiegazioni."},
-        {'role': 'user',
-         'content': f"Estrai le migliori 10 entità (persone, luoghi, organizzazioni, momenti storici, eventi, prodotti, concetti, opere e lingue) dal seguente articolo in modo che possano essere utilizzati com anchor text per creare link ad altri articoli ed aumentare il SEO: {content}"},
-        {"role": "user",
-         "content": "Rispondi esclusivamente con un oggetto JSON valido nel seguente formato: {\"entities\": [\"entity1\", \"entity2\", ...]}"}])
-    if result_text.startswith("```json"):
-        result_text = result_text[8:-3]
-    if result_text.startswith("```"):
-        result_text = result_text[3:-3]
-    result = json.loads(result_text)
-    if 'entities' not in result:
-        return jsonify({"error": "Invalid response from OpenAI API"}), 500
+        # get all entities from the content
+        result_text = openai.completions(messages=[
+            {"role": "system",
+             "content": "Sei un SEO Content Specialist e devi individuare le entità contenute in un contenuto HTML. Rispondi solo con un oggetto JSON valido, senza spiegazioni."},
+            {'role': 'user',
+             'content': f"Estrai le migliori 10 entità (persone, luoghi, organizzazioni, momenti storici, eventi, prodotti, concetti, opere e lingue) dal seguente articolo in modo che possano essere utilizzati com anchor text per creare link ad altri articoli ed aumentare il SEO: {content}"},
+            {"role": "user",
+             "content": "Rispondi esclusivamente con un oggetto JSON valido nel seguente formato: {\"entities\": [\"entity1\", \"entity2\", ...]}"}])
+        if result_text.startswith("```json"):
+            result_text = result_text[8:-3]
+        elif result_text.startswith("```"):
+            result_text = result_text[3:-3]
+        result = json.loads(result_text)
+        if 'entities' not in result:
+            return jsonify({"error": "Invalid response from OpenAI API"}), 500
 
-    # replace entities with anchor text
-    titles = {}
-    for entity in result['entities']:
+        # replace entities with anchor text
+        titles = {}
+        for entity in result['entities']:
 
-        # skip unwanted entities
-        if entity.lower() in [settings.BLACKLIST_ENTITIES]:
-            print(f"Skipping entity: {entity}")
-            continue
-
-        # skip numbers
-        if entity.isdigit():
-            print(f"Skipping number: {entity}")
-            continue
-
-        print(f"Searching for entity: {entity}")
-        titles[entity] = wp.search_wp_post_titles(entity, not_id=post_id)
-
-        element = None
-        elements = soup.find_all(string=lambda tag: entity in tag.get_text())
-        if elements:
-            element = elements[0]
-            # skip if the text is already linked
-            if element.parent.name == 'a':
-                print(f"Skipping already linked entity: {entity}")
+            # skip unwanted entities
+            if entity.lower() in [settings.BLACKLIST_ENTITIES]:
+                print(f"Skipping entity: {entity}")
                 continue
 
-        if element:
-            if titles[entity]:
-                print(f"Titles found for entity '{entity}': {titles[entity]}")
-                post_id = openai.completions(messages=[
-                    {"role": "system",
-                     "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
-                    {'role': 'user',
-                     'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
-                    {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure 0 se il titolo non è inerente a: {content}"}])
-                post_id = int(post_id)
+            # skip numbers
+            if entity.isdigit():
+                print(f"Skipping number: {entity}")
+                continue
 
-                if post_id:
-                    # Replace the entity with the new <a> tag
-                    url = wp.get_post_permalink(post_id)
+            print(f"Searching for entity: {entity}")
+            titles[entity] = wp.search_wp_post_titles(entity, not_id=post_id)
 
-                    replace_with_link(element, entity, url)
+            element = None
+            elements = soup.find_all(string=lambda tag: entity in tag.get_text())
+            if elements:
+                element = elements[0]
+                # skip if the text is already linked
+                if element.parent.name == 'a':
+                    print(f"Skipping already linked entity: {entity}")
+                    continue
 
-            else:
-                tag_name = wp.search_wp_tag(entity)
-                if tag_name:
-                    print(f"Tag found for entity '{entity}': {tag_name}")
-                    url = f"/tag/{tag_name.replace(' ', '-').lower()}"
-                    replace_with_link(element, entity, url)
+            if element:
+                if titles[entity]:
+                    print(f"Titles found for entity '{entity}': {titles[entity]}")
+                    post_id = openai.completions(messages=[
+                        {"role": "system",
+                         "content": "Sei un SEO Content Specialist e devi scegliere il giusto articolo da associare ad un anchor text."},
+                        {'role': 'user',
+                         'content': f'Scegli per questa anchor text: "{entity}" uno fra i seguenti titoli, oppure non scegliere nulla se il titolo non è inerente al contenuto dell\'articolo: {titles}'},
+                        {'role': 'user', 'content': f"Restituisci solo la chiave numerica associata al titolo scelto, oppure 0 se il titolo non è inerente a: {content}"}])
+                    post_id = int(post_id)
 
-    content = str(soup)
+                    if post_id:
+                        # Replace the entity with the new <a> tag
+                        url = wp.get_post_permalink(post_id)
+
+                        replace_with_link(element, entity, url)
+
+                else:
+                    tag_name = wp.search_wp_tag(entity)
+                    if tag_name:
+                        print(f"Tag found for entity '{entity}': {tag_name}")
+                        url = f"/tag/{tag_name.replace(' ', '-').lower()}"
+                        replace_with_link(element, entity, url)
+
+        content = str(soup)
+    except Exception as e:
+        print("Error:", e)
+
     return content
 
 
