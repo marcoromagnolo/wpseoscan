@@ -244,12 +244,16 @@ def update_posts():
     posts = wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
                             to_post_date=settings.WP_QUERY['select_posts_to_date'],
                             where=f"post_author in ({','.join(settings.WP_QUERY['in_post_authors'])})", order='ASC')
+    post_ids = []
     for post in posts:
         post_id = post[0]
         post_content = post[1]
         post_content = update_anchors(post_content, post_id)
         print(f"Updating post {post_id} with content: {post_content}")
         wp.wp_update_post_content(post_id, post_content)
+        post_ids.append(post_id)
+
+    return jsonify({"posts": post_ids}), 200
 
 if __name__ == '__main__':
     logger.info('Application start')
