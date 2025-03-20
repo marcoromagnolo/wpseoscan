@@ -238,7 +238,7 @@ def post_update_anchors():
 #     logger.info('Init process completed')
 
 
-@app.route('/update-posts/')
+@app.route('/update-posts')
 def update_posts():
     # Users: redazione(2), marco.bianchi(13), francesca.moretti(14)
     posts = wp.get_wp_posts(from_post_date=settings.WP_QUERY['select_posts_from_date'],
