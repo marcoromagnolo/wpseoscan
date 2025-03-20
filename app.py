@@ -12,6 +12,7 @@ import logg
 import openai
 from bs4 import BeautifulSoup, NavigableString
 
+from export_as_update import post_id
 from settings import WP_QUERY
 
 pidman.add_pid_file("wpseoscan.pid")
@@ -165,18 +166,19 @@ def post_update_anchors():
     data = request.get_json()
 
     # Estrai i dati dal JSON ricevuto
-    content = data.get('content')
+    post_content = data.get('content')
+    post_id = data.get('id')
 
     # Verifica che sia stato fornito il contenuto
-    if not content:
+    if not post_content:
         return jsonify({"error": "Missing 'content'"}), 400
 
-    content = update_anchors(content)
+    post_content = update_anchors(post_content, post_id)
 
     # Simulazione di salvataggio
     response = {
-        "content": content,
-        "content_length": len(content)  # Lunghezza del contenuto ricevuto
+        "content": post_content,
+        "content_length": len(post_content)  # Lunghezza del contenuto ricevuto
     }
 
     return jsonify(response), 200

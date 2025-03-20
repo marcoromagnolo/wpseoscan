@@ -20,7 +20,7 @@ def get_order_by(orders):
     return ""
 
 
-def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now(), status='publish', post_type='post',
+def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=None, status='publish', post_type='post',
                  where=None, order='ASC', limit=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
@@ -34,6 +34,9 @@ def get_wp_posts(from_post_date='1970-01-01 00:00:00', to_post_date=datetime.now
         limit = f"LIMIT {limit}"
     else:
         limit = ''
+
+    if to_post_date is None:
+        to_post_date = datetime.now()
 
     select_query = f"""
         SELECT id, post_content from wp_posts 
