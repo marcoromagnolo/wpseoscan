@@ -12,7 +12,6 @@ import logg
 import openai
 from bs4 import BeautifulSoup, NavigableString
 
-from export_as_update import post_id
 from settings import WP_QUERY
 
 pidman.add_pid_file("wpseoscan.pid")
