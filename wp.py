@@ -103,17 +103,20 @@ def wp_update_post_content(post_id, cleaned_content):
         db_connection.close()
 
 
-def search_wp_post_titles(entity, not_id=None):
+def search_wp_post_titles(entity, not_in_authors=None, not_id=None):
     db_connection = open_connection()
     db_cursor = db_connection.cursor()
+    not_in_authors_str = ""
+    if not_in_authors:
+        not_in_authors_str = f"AND POST_AUTHOR NOT IN ({','.join(not_in_authors)})"
     select_query = f"""
             SELECT id, post_title from wp_posts 
             WHERE post_type = 'post' AND post_status = 'publish' 
-            AND post_title LIKE %s order by ID desc limit 10
+            AND post_title REGEXP %s {not_in_authors_str} order by ID desc limit 10
         """
 
     try:
-        db_cursor.execute(select_query, (f"%{entity}%", ))
+        db_cursor.execute(select_query, (f"(?i)[[:<:]]{entity}[[:>:]]", ))
         posts = {}
         for row in db_cursor.fetchall():
             if not_id and row[0] == not_id:
