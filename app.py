@@ -1,4 +1,5 @@
 import json
+import random
 import re
 
 import werkzeug.exceptions
@@ -47,22 +48,15 @@ def health_check():
     return jsonify({"status": "running"}), 200
 
 
-def is_inside_bad_html_tag(soup, first_index):
+def is_inside_bad_html_tag(element, entity):
     """Check if the given index is inside an <a> tag text."""
-    current_index = 0
-
-    for element in soup.find_all(string=True, recursive=True):
-        if isinstance(element, NavigableString):
-            text_length = len(element)
-
-            if current_index <= first_index < current_index + text_length:
-                # Found the text element containing the index
-                parent = element.parent
-                if parent and parent.name == 'a':  # Check if the text is within an <a> tag
-                    print(f"Error: Index {first_index} is inside an <a> tag text: {element}")
-                    return True
-                else:
-                    return False
+    # skip if the text is already linked
+    if element.parent.name == 'a':
+        print(f"Skipping entity in link: {entity}")
+        return True
+    if element.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+        print(f"Skipping entity in header: {entity}")
+        return True
 
 
 def replace_with_link(element, entity, url):
@@ -115,15 +109,14 @@ def update_anchors(content, post_id=None):
 
                 element = None
                 elements = soup.find_all(string=lambda tag: entity in tag.get_text())
+                ok_elements = []
                 if elements:
-                    element = elements[0]
-                    # skip if the text is already linked
-                    if element.parent.name == 'a':
-                        print(f"Skipping already linked entity: {entity}")
-                        continue
-                    if element.parent.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
-                        print(f"Skipping entity in header: {entity}")
-                        continue
+                    for el in elements:
+                        if not is_inside_bad_html_tag(el, entity):
+                            ok_elements.append(el)
+
+                # Randomly pick one of the elements to replace
+                element = random.choice(elements)
 
                 if element:
                     if titles[entity]:
